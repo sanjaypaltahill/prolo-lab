@@ -11,7 +11,7 @@ red_threshold = 0
 # Define conditions
 conditions = ["SafeGuide", "PELP1", "AMBRA1", "SNAP23"]
 
-# Given an image, return the number of pixels whose green
+# Given an image, return the number of pixels whose greenxa
 # value exceeds the threshold
 def compute_green_area(img, green_threshold):
     green_img = img[:,:,1]
@@ -55,6 +55,14 @@ def perform_macropinocytosis_analysis(choice):
     means = []
     stds = []
 
+    # Define the colors for each condition
+    color_map = {
+        "PELP1": "#8D9C86",
+        "SafeGuide": "#B8B2B2",
+        "AMBRA1": "#D4A498",
+        "SNAP23": "#D4A498"
+    }
+
     for condition in conditions:
         folder_path = os.path.join(base_folder, f"{condition} {choice}")
         scores = analyze_condition(folder_path)
@@ -69,11 +77,15 @@ def perform_macropinocytosis_analysis(choice):
         means.append(mean_ratio)
         stds.append(std_ratio)
 
+    # Assign colors in the order of conditions
+    bar_colors = [color_map.get(cond, "#AAAAAA") for cond in conditions]  # default grey if missing
+
     # Plotting
     plt.figure(figsize=(8,5))
-    plt.bar(conditions, means, yerr=stds, capsize=5, color='skyblue')
+    bars = plt.bar(conditions, means, yerr=stds, capsize=5, color=bar_colors)
     plt.ylabel("Green/Red Ratio")
-    plt.title(f"Macropinocytosis Analysis ({choice})")
+    plt.title(f"Macropinocytosis in KO Lines: {choice}", fontsize=16, weight='bold')
+    plt.tight_layout()
     plt.show()
 
 
