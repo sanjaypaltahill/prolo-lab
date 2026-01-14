@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from scipy.stats import ttest_ind
 
 ## CONFIGURATION ##
 # Choose thresholds to avoid counting background noise
@@ -53,38 +54,61 @@ def perform_macropinocytosis_analysis(choice):
     base_folder = f"Macropinocytosis {choice} Images"
     
     means = []
-    stds = []
+    sems = []  # Changed from stds to sems
+    all_scores = []
 
     # Define the colors for each condition
     color_map = {
-        "PELP1": "#8D9C86",
-        "SafeGuide": "#B8B2B2",
-        "AMBRA1": "#D4A498",
-        "SNAP23": "#D4A498"
+        "PELP1": "#8D9C86",   # greenish for increase
+        "SafeGuide": "#B8B2B2", # neutral
+        "AMBRA1": "#D46C6C",  # reddish for decrease
+        "SNAP23": "#D46C6C"
     }
 
     for condition in conditions:
         folder_path = os.path.join(base_folder, f"{condition} {choice}")
         scores = analyze_condition(folder_path)
+        all_scores.append(scores)
 
         if scores:  # only compute if there are images
             mean_ratio = np.mean(scores)
             std_ratio = np.std(scores)
+            n = len(scores)
+            sem = std_ratio / np.sqrt(n)  # Calculate SEM instead of SD
         else:
             mean_ratio = 0
-            std_ratio = 0
+            sem = 0
 
         means.append(mean_ratio)
-        stds.append(std_ratio)
-
-    # Assign colors in the order of conditions
-    bar_colors = [color_map.get(cond, "#AAAAAA") for cond in conditions]  # default grey if missing
+        sems.append(sem)  # Store SEM instead of SD
 
     # Plotting
     plt.figure(figsize=(8,5))
-    bars = plt.bar(conditions, means, yerr=stds, capsize=5, color=bar_colors)
+    bars = plt.bar(conditions, means, yerr=sems, capsize=5, color=[color_map.get(c, "#AAAAAA") for c in conditions])
     plt.ylabel("Green/Red Ratio")
     plt.title(f"Macropinocytosis in KO Lines: {choice}", fontsize=16, weight='bold')
+
+    # Add significance vs SafeGuide
+    control_scores = all_scores[conditions.index("SafeGuide")]
+    y_max = max([m + s for m, s in zip(means, sems)]) * 1.1  # space above tallest bar
+
+    for i, scores in enumerate(all_scores):
+        if conditions[i] == "SafeGuide":
+            continue  # skip control itself
+        if not scores or not control_scores:
+            continue
+        stat, p = ttest_ind(scores, control_scores)
+        if p < 0.001:
+            sig = "***"
+        elif p < 0.01:
+            sig = "**"
+        elif p < 0.05:
+            sig = "*"
+        else:
+            sig = ""
+        if sig:
+            plt.text(i, means[i] + sems[i] + 0.02 * y_max, sig, ha='center', fontsize=14, color='black')
+
     plt.tight_layout()
     plt.show()
 
