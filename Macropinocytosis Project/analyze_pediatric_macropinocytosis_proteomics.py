@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind
 
 # ---- Load txt files (tab-delimited) ----
-pelp1 = pd.read_csv("PELP1_expression_enrichment.txt", sep="\t")
-snap23 = pd.read_csv("SNAP23_expression_enrichment.txt", sep="\t")
+pelp1 = pd.read_csv("Macropinocytosis Project/PELP1_expression_enrichment.txt", sep="\t")
+snap23 = pd.read_csv("Macropinocytosis Project/SNAP23_expression_enrichment.txt", sep="\t")
 
 # ---- Standardize group names ----
 def clean_groups(df):
